@@ -1,0 +1,95 @@
+﻿@model sb_admin_2.Web1.Domain.AdminData
+
+@{
+    ViewBag.Title = "AdminPage";
+}
+
+<h2>AdminPage</h2>
+
+@if ((Session["UserID"] != null) && (Session["UserName"].ToString() == "dimon"))
+{
+    <div class="row">
+        <!--First column-->
+        <div class="col-lg-6">
+            <!--Bulk upload-->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h3>Import from excel</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <form action="UploadPassportData" method="post" enctype="multipart/form-data">
+                                        <div class="col-lg-4">
+                                            <label>Passport:</label>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="submit" />
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-lg-12">
+                                    <form action="UploadPersonData" method="post" enctype="multipart/form-data">
+                                        <div class="col-lg-4">
+                                            <label>Person:</label>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="submit" />
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-lg-12">
+                                    <form action="UploadMileCardData" method="post" enctype="multipart/form-data">
+                                        <div class="col-lg-4">
+                                            <label>MileCard:</label>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="submit" />
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-lg-12">
+                                    <form action="UploadCompanyData" method="post" enctype="multipart/form-data">
+                                        <div class="col-lg-4">
+                                            <label>Company:</label>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <input type="submit" />
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!--Second column-->
+        <div class="col-lg-6">
+
+        </div>
+    </div>
+}

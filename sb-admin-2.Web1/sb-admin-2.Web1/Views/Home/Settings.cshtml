@@ -1,0 +1,1600 @@
+﻿@model sb_admin_2.Web1.Domain.SettingsData
+
+@{
+    ViewBag.Title = "Settings";
+}
+
+<div class="row">
+    <h2>Settings</h2>
+</div>
+
+@if (Session["UserID"] != null)
+{
+    <div class="row">
+        <div class="col-lg-6">
+            <!--Country-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Country</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#countrydetails" onclick="ClearCountryDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableCountry">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>ISO2</th>
+                                    <th>ISO3</th>
+                                    <th>Citizen</th>
+                                    <th>Unions</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>ISO2</th>
+                                    <th>ISO3</th>
+                                    <th>Citizen</th>
+                                    <th>Unions</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.catalog.countryList)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(model => item.Name)</td>
+                                        <td>@Html.DisplayFor(model => item.ISO)</td>
+                                        <td>@Html.DisplayFor(model => item.ISO3)</td>
+                                        <td>@Html.DisplayFor(model => item.Nationality)</td>
+                                        <td>@Html.DisplayFor(model => item.UnionList.StrFormat)</td>
+                                        <td><button type="button" data-toggle="modal" data-target="#countrydetails" onclick="FillCountryDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            $(document).ready(function () {
+                                $('#tableCountry').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            EditedCountryID = 0;
+
+                            function ClearCountryUnionSelectList() {
+                                var x = document.getElementById("slCountryUnionChosen");
+                                var n = x.length;
+                                for (i = 0; i < n; i++) {
+                                    x.remove(x[0]);
+                                }
+
+                                var x = document.getElementById("slCountryUnionChosenMirror");
+                                var n = x.length;
+                                for (i = 0; i < n; i++) {
+                                    x.remove(x[0]);
+                                }
+                            }
+
+                            function ClearCountryDetails() {
+                                EditedCountryID = 0;
+
+                                $('#inputCountryName').val('');
+                                $('#inputCountryISO').val('');
+                                $('#inputCountryISO3').val('');
+                                $('#inputCountryCitizen').val('');
+
+                                ClearCountryUnionSelectList();
+                            }
+
+                            function FillCountryDetails(id) {
+                                EditedCountryID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindCountry", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputCountryName").value = data.Name;
+                                            document.getElementById("inputCountryISO").value = data.ISO;
+                                            document.getElementById("inputCountryISO3").value = data.ISO3;
+                                            document.getElementById("inputCountryCitizen").value = data.Nationality;
+
+                                            ClearCountryUnionSelectList();
+
+                                            var inp = document.getElementById("slCountryUnionChosen");
+                                            for (i = 0; i < data.UnionList.length; i++) {
+                                                var option = document.createElement("option");
+                                                option.text = data.UnionList[i].Name;
+                                                inp.add(option);
+                                            }
+
+                                            var inp = document.getElementById("slCountryUnionChosenMirror");
+                                            for (i = 0; i < data.mirror.length; i++) {
+                                                var option = document.createElement("option");
+                                                option.text = data.mirror[i].Name;
+                                                inp.add(option);
+                                            }
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveCountryDetails() {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveCountry", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedCountryID,
+                                        Name: document.getElementById("inputCountryName").value,
+                                        ISO: document.getElementById("inputCountryISO").value,
+                                        ISO3: document.getElementById("inputCountryISO3").value,
+                                        Citizen: document.getElementById("inputCountryCitizen").value
+                                    },
+                                    success: function (data) {
+                                        $('#countrydetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function DeleteCountry() {
+                                if (confirm("Are you sure to delete the country?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteCountry", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedCountryID,
+                                        },
+                                        success: function (data) {
+                                            $('#countrydetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <form action="UploadCountry" method="post" enctype="multipart/form-data">
+                                <div class="col-lg-6">
+                                    <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                </div>
+                                <div class="col-lg-6">
+                                    <input type="submit"/>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Country union-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Country union</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#countryuniondetails" onclick="ClearCountryUnionDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableCountryUnion">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Short name</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Short name</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.catalog.countryUnionList)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(model => item.Name)</td>
+                                        <td>@Html.DisplayFor(model => item.ShortName)</td>
+                                        <td>@Html.DisplayFor(model => item.Note)</td>
+                                        <td><button type="button" data-toggle="modal" data-target="#countryuniondetails" onclick="FillCountryUnionDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            $(document).ready(function () {
+                                $('#tableCountryUnion').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            EditedCountryUnionID = 0;
+
+                            function ClearCountryUnionDetails() {
+                                EditedCountryUnionID = 0;
+
+                                $('#inputCountryUnionName').val('');
+                                $('#inputCountryUnionShortName').val('');
+                                $('#textcountryuniondescription').val('');
+                            }
+
+                            function FillCountryUnionDetails(id) {
+                                EditedCountryUnionID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindCountryUnion", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputCountryUnionName").value = data.Name;
+                                            document.getElementById("inputCountryUnionShortName").value = data.ShortName;
+                                            document.getElementById("textcountryuniondescription").value = data.Note;
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveCountryUnionDetails() {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveCountryUnion", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedCountryUnionID,
+                                        Name: document.getElementById("inputCountryUnionName").value,
+                                        ShortName: document.getElementById("inputCountryUnionShortName").value,
+                                        Note: document.getElementById("textcountryuniondescription").value
+                                    },
+                                    success: function (data) {
+                                        $('#countryuniondetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function DeleteCountryUnion() {
+                                if (confirm("Are you sure to delete the country union?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteCountryUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedCountryUnionID,
+                                        },
+                                        success: function (data) {
+                                            $('#countryuniondetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <form action="UploadCountry" method="post" enctype="multipart/form-data">
+                                <div class="col-lg-6">
+                                    <input type="file" name="file" id="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                                </div>
+                                <div class="col-lg-6">
+                                    <input type="submit" />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Aviacompany-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Aviacompany</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#aviacompanydetails" onclick="ClearAviacompanyDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableaviacompany">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>IATA</th>
+                                    <th>ICAO</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>IATA</th>
+                                    <th>ICAO</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.aviaCompanyList)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(model => item.FullName)</td>
+                                        <td>@Html.DisplayFor(model => item.IATA)</td>
+                                        <td>@Html.DisplayFor(model => item.ICAO)</td>
+                                        <td>@Html.DisplayFor(model => item.Description)</td>
+                                        <td><button type="button" data-toggle="modal" data-target="#aviacompanydetails" onclick="FillAviacompanyDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            $(document).ready(function () {
+                                $('#tableaviacompany').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            EditedAviacompanyID = 0;
+
+                            function ClearAviaUnionSelectList() {
+                                var x = document.getElementById("slAviaUnionChosen");
+                                var n = x.length;
+                                for (i = 0; i < n; i++) {
+                                    x.remove(x[0]);
+                                }
+
+                                var x = document.getElementById("slAviaUnionChosenMirror");
+                                var n = x.length;
+                                for (i = 0; i < n; i++) {
+                                    x.remove(x[0]);
+                                }
+                            }
+
+                            function ClearAviacompanyDetails() {
+                                EditedAviacompanyID = 0;
+
+                                $('#inputAviacompanyName').val('');
+                                $('#inputAviacompanyIATA').val('');
+                                $('#inputAviacompanyICAO').val('');
+                                $('#textaviacompanydescription').val('');
+
+                                ClearAviaUnionSelectList();
+                            }
+
+                            function FillAviacompanyDetails(id) {
+                                EditedAviacompanyID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindAviacompany", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputAviacompanyName").value = data.FullName;
+                                            document.getElementById("inputAviacompanyICAO").value = data.ICAO;
+                                            document.getElementById("textaviacompanydescription").value = data.Description;
+
+                                            ClearAviaUnionSelectList();
+
+                                            var inp = document.getElementById("slAviaUnionChosen");
+                                            for (i = 0; i < data.aviaCompanyUnionList.length; i++)
+                                            {
+                                                var option = document.createElement("option");
+                                                option.text = data.aviaCompanyUnionList[i].Name;
+                                                inp.add(option);
+                                            }
+
+                                            var inp = document.getElementById("slAviaUnionChosenMirror");
+                                            for (i = 0; i < data.mirror.length; i++) {
+                                                var option = document.createElement("option");
+                                                option.text = data.mirror[i].Name;
+                                                inp.add(option);
+                                            }
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveAviacompanyDetails() {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveAviacompany", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedAviacompanyID,
+                                        Name: document.getElementById("inputAviacompanyName").value,
+                                        ICAO: document.getElementById("inputAviacompanyICAO").value,
+                                        Note: document.getElementById("textaviacompanydescription").value
+                                    },
+                                    success: function (data) {
+                                        $('#aviacompanydetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function DeleteAviacompany() {
+                                if (confirm("Are you sure to delete the Aviacompany?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteAviacompany", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedAviacompanyID,
+                                        },
+                                        success: function (data) {
+                                            $('#aviacompanydetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <!--AviacompanyUnion-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Aviacompany allianace</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#aviacompanyuniondetails" onclick="ClearAviacompanyUnionDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableaviacompanyunion">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.aviaCompanyUnionList)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(model => item.Name)</td>
+                                        <td>@Html.DisplayFor(model => item.Note)</td>
+                                        <td><button type="button" data-toggle="modal" data-target="#aviacompanyuniondetails" onclick="FillAviacompanyUnionDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            $(document).ready(function () {
+                                $('#tableaviacompanyunion').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            EditedAviacompanUnionID = 0;
+
+                            function ClearAviacompanyUnionDetails() {
+                                EditedAviacompanUnionID = 0;
+
+                                $('#inputAviacompanyUnionName').val('');
+                                $('#textaviacompanyuniondescription').val('');
+                            }
+
+                            function FillAviacompanyUnionDetails(id) {
+                                EditedAviacompanUnionID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindAviacompanyUnion", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputAviacompanyUnionName").value = data.Name;
+                                            document.getElementById("textaviacompanyuniondescription").value = data.Note;
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveAviacompanyUnionDetails() {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveAviacompanyUnion", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedAviacompanUnionID,
+                                        Name: document.getElementById("inputAviacompanyUnionName").value,
+                                        Note: document.getElementById("textaviacompanyuniondescription").value
+                                    },
+                                    success: function (data) {
+                                        $('#aviacompanyuniondetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function DeleteAviacompanyUnion() {
+                                if (confirm("Are you sure to delete the Aviacompany alliance?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteAviacompanyUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedAviacompanUnionID,
+                                        },
+                                        success: function (data) {
+                                            $('#aviacompanyuniondetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <!--Label-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Label</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#labeldetails" onclick="ClearLabelDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableLabel">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Comment</th>
+                                    <th>Parent</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Comment</th>
+                                    <th>Parent</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.catalog.labelList)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="label label-default" style="background-color:@item.ColorHtml; color:@item.BlackOrWhite">
+                                                @Html.DisplayFor(model => item.Name)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(model => item.Comment)
+                                        </td>
+                                        <td>
+                                            @if (item.ParentID > -1)
+                                            {
+                                                <span class="label label-default" style="background-color:@item.ParentColorHTML; color:@item.ParentBlackOrWhite">
+                                                    @Html.DisplayFor(model => item.ParentName)
+                                                </span>
+                                            }
+                                        </td>
+                                        <td><button type="button" data-toggle="modal" data-target="#labeldetails" onclick="FillLabelDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            EditedLabelID = 0;
+
+                            function ClearLabelDetails() {
+                                EditedLabelID = 0;
+
+                                $('#inputLabelName').val('');
+                                $('#inputLabelColor').val('#00FF00');
+                                $('#textlabeldescription').val('');
+                                $('#selectLabelParent').val('').change();
+                            }
+
+                            function FillLabelDetails(id) {
+                                EditedLabelID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindLabel", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputLabelName").value = data.Name;
+                                            document.getElementById("textlabeldescription").value = data.Comment;
+                                            document.getElementById("inputLabelColor").value = data.ColorHtml;
+                                            $('#selectLabelParent').val(data.ParentName).change();
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveLabelDetails() {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveLabel", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedLabelID,
+                                        Name: document.getElementById("inputLabelName").value,
+                                        Comment: document.getElementById("textlabeldescription").value,
+                                        ColorHTML: document.getElementById("inputLabelColor").value,
+                                        ParentName: document.getElementById("selectLabelParent").value
+                                    },
+                                    success: function (data) {
+                                        $('#labeldetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            $(document).ready(function () {
+                                $('#tableLabel').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            function DeleteLabel() {
+                                if (confirm("Are you sure to delete the label?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteLabel", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedLabelID,
+                                        },
+                                        success: function (data) {
+                                            $('#labeldetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <datalist id="listAviacompany">
+                @foreach (var item in Model.aviaCompanyList)
+                {
+                    <option value='@item.FullName' />
+                }
+            </datalist>
+
+            <datalist id="listAviacompanyUnion">
+                @foreach (var item in Model.aviaCompanyUnionList)
+                {
+                    <option value='@item.Name' />
+                }
+            </datalist>
+
+            <!--Mile card status-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Mile card status</h3>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="row">
+                                <div class="col-lg-12" style="text-align: right">
+                                    <button type="button" class="btn btn-primary btn-circle btn-lg" title="Add" data-toggle="modal" data-target="#milecardstatusdetails" onclick="ClearMilecardstatusDetails()">
+                                        <i class="fa fa-plus fa-1x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="dataTable_wrapper">
+                        <table class="table table-striped table-bordered table-hover" id="tableMilecardstatus">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Miles range</th>
+                                    <th>Aviacompany</th>
+                                    <th>Avia alliance</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Miles range</th>
+                                    <th>Aviacompany</th>
+                                    <th>Avia alliance</th>
+                                    <th>Note</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                @foreach (var item in Model.mileCardStatusList)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(model => item.Name)</td>
+                                        <td>@Html.DisplayFor(model => item.RangeStr)</td>
+                                        <td>@Html.DisplayFor(model => item.aviacompany.ICAO)</td>
+                                        <td>@Html.DisplayFor(model => item.aviacompanyunion.Name)</td>
+                                        <td>@Html.DisplayFor(model => item.Note)</td>
+                                        <td><button type="button" data-toggle="modal" data-target="#milecardstatusdetails" onclick="FillMilecardstatusDetails('@item.ID')"><i class="glyphicon glyphicon-pencil"></i></button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <script>
+                            $(document).ready(function () {
+                                $('#tableMilecardstatus').DataTable({
+                                    initComplete: function () {
+                                        this.api().columns([]).every(function () {
+
+                                            var column = this;
+                                            var select = $('<select><option value=""></option></select>')
+                                                .appendTo($(column.footer()).empty())
+                                                .on('change', function () {
+                                                    var val = $.fn.dataTable.util.escapeRegex(
+                                                        $(this).val()
+                                                    );
+
+                                                    column
+                                                        .search(val ? '^' + val + '$' : '', true, false)
+                                                        .draw();
+                                                });
+                                            column.data().unique().sort().each(function (d, j) {
+                                                select.append('<option value="' + d + '">' + d + '</option>')
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+
+                            EditedMilecardstatusID = 0;
+
+                            function ClearMilecardstatusDetails() {
+                                EditedMilecardstatusID = 0;
+
+                                $('#inputMilecardstatusName').val('');
+                                $('#inputMilecardstatusMinVal').val('');
+                                $('#inputMilecardstatusMaxVal').val('');
+                                $('#inputMilecardstatusAviaCompany').val('');
+                                $('#inputMilecardstatusAviaUnion').val('');
+                                $('#textmilecardstatusdescription').val('');
+                            }
+
+                            function FillMilecardstatusDetails(id) {
+                                EditedMilecardstatusID = id;
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("FindMileCardStatus", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: id
+                                    },
+                                    success: function (data) {
+                                        if (data != null) {
+                                            document.getElementById("inputMilecardstatusName").value = data.Name;
+
+                                            var MinVal = data.MinVal;
+                                            if (MinVal == 0)
+                                                MinVal = '';
+                                            document.getElementById("inputMilecardstatusMinVal").value = MinVal;
+
+                                            var MaxVal = data.MaxVal;
+                                            if (MaxVal == 0)
+                                                MaxVal = '';
+                                            document.getElementById("inputMilecardstatusMaxVal").value = MaxVal;
+
+                                            document.getElementById("inputMilecardstatusAviaCompany").value = data.aviacompany.FullName;
+                                            document.getElementById("inputMilecardstatusAviaUnion").value = data.aviacompanyunion.Name;
+                                            document.getElementById("textmilecardstatusdescription").value = data.Note;
+                                        }
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function SaveMilecardstatusDetails() {
+                                var MinVal = document.getElementById("inputMilecardstatusMinVal").value;
+                                var MaxVal = document.getElementById("inputMilecardstatusMaxVal").value;
+
+                                if (MinVal == '')
+                                {
+                                    MinVal = -1;
+                                }
+
+                                if (MaxVal == '')
+                                {
+                                    MaxVal = -1;
+                                }
+
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("SaveMileCardStatus", "Home")',
+                                    dataType: 'json',
+                                    data: {
+                                        id: EditedMilecardstatusID,
+                                        Name: document.getElementById("inputMilecardstatusName").value,
+                                        MinVal: MinVal,
+                                        MaxVal: MaxVal,
+                                        nameAC: document.getElementById("inputMilecardstatusAviaCompany").value,
+                                        nameACU: document.getElementById("inputMilecardstatusAviaUnion").value,
+                                        Note: document.getElementById("textmilecardstatusdescription").value
+                                    },
+                                    success: function (data) {
+                                        $('#milecardstatusdetails').modal('toggle');
+                                        location.reload();
+                                    },
+                                    error: function () {
+                                        alert('error');
+                                    }
+                                });
+                            }
+
+                            function DeleteMilecardstatus() {
+                                if (confirm("Are you sure to delete the mile card status?")) {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("DeleteMileCardStatus", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            id: EditedMilecardstatusID,
+                                        },
+                                        success: function (data) {
+                                            $('#milecardstatusdetails').modal('toggle');
+                                            location.reload();
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    })
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Modal-->
+        <!--Country-->
+        <div class="modal fade" id="countrydetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="countrydetailslabel">Country</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divCountryName">
+                                    <input class="form-control" placeholder="Name" id="inputCountryName">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divCountryISO">
+                                    <input class="form-control" placeholder="ISO2" id="inputCountryISO">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divCountryISO3">
+                                    <input class="form-control" placeholder="ISO3" id="inputCountryISO3">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divCountryCitizen">
+                                    <input class="form-control" placeholder="Citizen" id="inputCountryCitizen">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-5">
+                                <label for="slCountryUnionChosen">Country union (joined)</label>
+                                <select class="form-control" id="slCountryUnionChosen" size="5"></select>
+                            </div>
+                            <div class="col-lg-2">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <label></label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <button type="button" class="btn" onclick="OnClickJoinCountryUnionAdd()"><i class="glyphicon glyphicon-chevron-left"></i></button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <button type="button" class="btn" onclick="OnClickJoinCountryUnionRemove()"><i class="glyphicon glyphicon-chevron-right"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <label for="slCountryUnionChosenMirror">Country union</label>
+                                <select class="form-control" id="slCountryUnionChosenMirror" size="5"></select>
+                            </div>
+                        </div>
+
+                        <script>
+                            function OnClickJoinCountryUnionAdd() {
+                                var inp = document.getElementById("slCountryUnionChosen");
+                                var inpMirror = document.getElementById("slCountryUnionChosenMirror");
+                                var selectedMirror = inpMirror.selectedIndex;
+                                if (selectedMirror >= 0) {
+                                    var nameMirror = inpMirror[selectedMirror].text;
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("JoinCountryUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            idCountry: EditedCountryID,
+                                            nameUnion: nameMirror,
+                                            status: true,
+                                        },
+                                        success: function (data) {
+
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    });
+
+                                    inpMirror.remove(inpMirror[selectedMirror]);
+
+                                    var option = document.createElement("option");
+                                    option.text = nameMirror;
+                                    inp.add(option);
+                                }
+                            }
+
+                            function OnClickJoinCountryUnionRemove() {
+                                var inp = document.getElementById("slCountryUnionChosen");
+                                var inpMirror = document.getElementById("slCountryUnionChosenMirror");
+                                var selected = inp.selectedIndex;
+                                if (selected >= 0) {
+                                    var name = inp[selected].text;
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("JoinCountryUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            idCountry: EditedCountryID,
+                                            nameUnion: name,
+                                            status: false,
+                                        },
+                                        success: function (data) {
+
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    });
+
+                                    inp.remove(inp[selected]);
+
+                                    var option = document.createElement("option");
+                                    option.text = name;
+                                    inpMirror.add(option);
+                                }
+                            }
+                        </script>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteCountry()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveCountryDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Country union-->
+        <div class="modal fade" id="countryuniondetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="countryuniondetailslabel">Country union</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divCountryUnionName">
+                                    <input class="form-control" placeholder="Name" id="inputCountryUnionName">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divCountryUnionShortName">
+                                    <input class="form-control" placeholder="Short name" id="inputCountryUnionShortName">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="3" id="textcountryuniondescription" placeholder="Note"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteCountryUnion()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveCountryUnionDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Aviacompany-->
+        <div class="modal fade" id="aviacompanydetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="aviacompanydetailslabel">Country</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divAviacompanyName">
+                                    <input class="form-control" placeholder="Name" id="inputAviacompanyName">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="form-group" id="divAviacompanyIATA">
+                                    <input class="form-control" placeholder="IATA" id="inputAviacompanyIATA">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="form-group" id="divAviacompanyICAO">
+                                    <input class="form-control" placeholder="ICAO" id="inputAviacompanyICAO">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="3" id="textaviacompanydescription" placeholder="Note"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-5">
+                                <label for="slAviaUnionChosen">Aviacompany union (joined)</label>
+                                <select class="form-control" id="slAviaUnionChosen" size="5"></select>
+                            </div>
+                            <div class="col-lg-2">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <label></label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <button type="button" class="btn" onclick="OnClickJoinAviaUnionAdd()"><i class="glyphicon glyphicon-chevron-left"></i></button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <button type="button" class="btn" onclick="OnClickJoinAviaUnionRemove()"><i class="glyphicon glyphicon-chevron-right"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <label for="slAviaUnionChosenMirror">Aviacompany union</label>
+                                <select class="form-control" id="slAviaUnionChosenMirror" size="5"></select>
+                            </div>
+                        </div>
+
+                        <script>
+                            function OnClickJoinAviaUnionAdd() {
+                                var inp = document.getElementById("slAviaUnionChosen");
+                                var inpMirror = document.getElementById("slAviaUnionChosenMirror");
+                                var selectedMirror = inpMirror.selectedIndex;
+                                if (selectedMirror >= 0) {
+                                    var nameMirror = inpMirror[selectedMirror].text;
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("JoinAviaCompanyUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            idAC: EditedAviacompanyID,
+                                            nameACU: nameMirror,
+                                            status: true,
+                                        },
+                                        success: function (data) {
+
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    });
+
+                                    inpMirror.remove(inpMirror[selectedMirror]);
+
+                                    var option = document.createElement("option");
+                                    option.text = nameMirror;
+                                    inp.add(option);
+                                }
+                            }
+
+                            function OnClickJoinAviaUnionRemove() {
+                                var inp = document.getElementById("slAviaUnionChosen");
+                                var inpMirror = document.getElementById("slAviaUnionChosenMirror");
+                                var selected = inp.selectedIndex;
+                                if (selected >= 0) {
+                                    var name = inp[selected].text;
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '@Url.Action("JoinAviaCompanyUnion", "Home")',
+                                        dataType: 'json',
+                                        data: {
+                                            idAC: EditedAviacompanyID,
+                                            nameACU: name,
+                                            status: false,
+                                        },
+                                        success: function (data) {
+
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    });
+
+                                    inp.remove(inp[selected]);
+
+                                    var option = document.createElement("option");
+                                    option.text = name;
+                                    inpMirror.add(option);
+                                }
+                            }
+                        </script>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteAviacompany()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveAviacompanyDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Labels-->
+        <div class="modal fade" id="labeldetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="labeldetailslabel">Label</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-10">
+                                <div class="form-group" id="divLabelName">
+                                    <input class="form-control" placeholder="Name" id="inputLabelName">
+                                </div>
+                            </div>
+                            <div class="col-lg-2">
+                                <div class="form-group" id="divLabelColor">
+                                    <input type="color" id="inputLabelColor" value="#ff0000">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divLabelParent">
+                                    <select class="form-control" id="selectLabelParent">
+                                        <option value=""></option>
+                                        @foreach (var item in Model.catalog.labelList)
+                                        {
+                                            <option value="@item.Name">@Html.DisplayFor(model => item.Name)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="3" id="textlabeldescription" placeholder="Comment"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteLabel()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveLabelDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Aviacompany union-->
+        <div class="modal fade" id="aviacompanyuniondetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="aviacompanyuniondetailslabel">Country</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group" id="divAviacompanyUnionName">
+                                    <input class="form-control" placeholder="Name" id="inputAviacompanyUnionName">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="3" id="textaviacompanyuniondescription" placeholder="Note"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteAviacompanyUnion()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveAviacompanyUnionDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Mile card status-->
+        <div class="modal fade" id="milecardstatusdetails" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="milecardstatusdetailslabel">Mile card status</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divMilecardstatusName">
+                                    <input class="form-control" placeholder="Name" id="inputMilecardstatusName">
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="form-group" id="divMilecardstatusMinVal">
+                                    <input class="form-control" placeholder="From" id="inputMilecardstatusMinVal">
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="form-group" id="divMilecardstatusMaxVal">
+                                    <input class="form-control" placeholder="Till" id="inputMilecardstatusMaxVal">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divMilecardstatusAviaCompany">
+                                    <input class="form-control" placeholder="Aviacompany" id="inputMilecardstatusAviaCompany" list="listAviacompany">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group" id="divMilecardstatusAviaUnion">
+                                    <input class="form-control" placeholder="Avia alliance" id="inputMilecardstatusAviaUnion" list="listAviacompanyUnion">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="3" id="textmilecardstatusdescription" placeholder="Note"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-6" style="text-align: left">
+                                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Delete" onclick="DeleteMilecardstatus()">
+                                    <i class="glyphicon glyphicon-remove fa-1x"></i>
+                                </button>
+                            </div>
+                            <div class="col-lg-6" style="text-align: right">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="SaveMilecardstatusDetails()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
