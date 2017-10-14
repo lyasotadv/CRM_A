@@ -472,22 +472,39 @@ namespace sb_admin_2.Web1.Models
             }
         }
 
-        public DateTime Birth { get; set; }
+        public DateTime? Birth { get; set; }
 
         public string BirthStr
         {
-            get { return Birth.ToString("ddMMMyy", Preferences.cultureInfo); }
+            get 
+            {
+                if (Birth.HasValue)
+                {
+                    return Birth.Value.ToString("ddMMMyy", Preferences.cultureInfo);
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
             set 
             {
                 if (value != BirthStr)
                 {
-                    try
+                    if (value == string.Empty)
                     {
-                        Birth = DateTime.ParseExact(value, "ddMMMyy", Preferences.cultureInfo);
+                        Birth = null;
                     }
-                    catch
+                    else
                     {
-                        throw new FormatException("Incorrect input date format. Please use: ddMMMyy. Example: 13Jun31");
+                        try
+                        {
+                            Birth = DateTime.ParseExact(value, "ddMMMyy", Preferences.cultureInfo);
+                        }
+                        catch
+                        {
+                            throw new FormatException("Incorrect input date format. Please use: ddMMMyy. Example: 13Jun31");
+                        }
                     }
                     Changed = true;
                 }
@@ -585,6 +602,7 @@ namespace sb_admin_2.Web1.Models
         {
             PassportList = new PassportList();
             PassportList.person = this;
+            Birth = null;
         }
 
         static public Person CreatePerson()
@@ -622,7 +640,10 @@ namespace sb_admin_2.Web1.Models
                 SecondNameUA = Convert.ToString(tab.Rows[0]["lastNameUA"]);
                 MiddleNameUA = Convert.ToString(tab.Rows[0]["middleNameUA"]);
                 itn = Convert.ToString(tab.Rows[0]["itn"]);
-                Birth = Convert.ToDateTime(tab.Rows[0]["birthDate"]);
+                if (tab.Rows[0]["birthDate"] != DBNull.Value)
+                {
+                    Birth = Convert.ToDateTime(tab.Rows[0]["birthDate"]);
+                }
                 Description = Convert.ToString(tab.Rows[0]["Note"]);
 
                 if (Convert.ToInt32(tab.Rows[0]["gender"]) == 0)
@@ -727,10 +748,12 @@ namespace sb_admin_2.Web1.Models
             else
                 str += "F";
 
-            TimeSpan age = DateTime.Now - Birth;
-            if (age < TimeSpan.FromDays(365.0 * 2.0))
-                str += "I";
-
+            if (Birth.HasValue)
+            {
+                TimeSpan age = DateTime.Now - Birth.Value;
+                if (age < TimeSpan.FromDays(365.0 * 2.0))
+                    str += "I";
+            }
             return str;
         }
     }
