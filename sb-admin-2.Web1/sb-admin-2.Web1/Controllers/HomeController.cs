@@ -519,10 +519,11 @@ namespace sb_admin_2.Web1.Controllers
                     (person as Person).Gender = Gender;
                     (person as Person).itn = itn;
                 }
-                catch (FormatException e)
+                catch (Exception e)
                 {
                     return Json(e.Message);
                 }
+                
 
                 person.Save();
             }

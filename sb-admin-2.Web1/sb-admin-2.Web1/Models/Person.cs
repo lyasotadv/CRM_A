@@ -317,16 +317,19 @@ namespace sb_admin_2.Web1.Models
     {
         public int PersonID { get; set; }
 
-        private enum Sex { male, female };
+        private enum Sex { none, male, female };
 
         private Sex _sex;
 
         private int GenderID()
         {
-            if (_sex == Sex.male)
-                return 0;
-            else
-                return 1;
+            switch (_sex)
+            {
+                case Sex.male: return 0;
+                case Sex.female: return 1;
+                case Sex.none: return 2;
+            }
+            return 2;
         }
 
         private string _FirstName;
@@ -441,10 +444,12 @@ namespace sb_admin_2.Web1.Models
         { 
             get
             {
-                if (_sex == Person.Sex.male)
-                    return "male";
-                else
-                    return "female";
+                switch (_sex)
+                {
+                    case Sex.male: return "male";
+                    case Sex.female: return "female";
+                    default: return "";
+                }
             }
             set
             {
@@ -464,7 +469,7 @@ namespace sb_admin_2.Web1.Models
                             }
                         default:
                             {
-                                throw new ArgumentException("Input gender in incorrect");
+                                throw new ArgumentException("Gender is undefined");
                             }
                     }
                     Changed = true;
@@ -472,22 +477,39 @@ namespace sb_admin_2.Web1.Models
             }
         }
 
-        public DateTime Birth { get; set; }
+        public DateTime? Birth { get; set; }
 
         public string BirthStr
         {
-            get { return Birth.ToString("ddMMMyy", Preferences.cultureInfo); }
+            get 
+            {
+                if (Birth.HasValue)
+                {
+                    return Birth.Value.ToString("ddMMMyy", Preferences.cultureInfo);
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
             set 
             {
                 if (value != BirthStr)
                 {
-                    try
+                    if (value == string.Empty)
                     {
-                        Birth = DateTime.ParseExact(value, "ddMMMyy", Preferences.cultureInfo);
+                        Birth = null;
                     }
-                    catch
+                    else
                     {
-                        throw new FormatException("Incorrect input date format. Please use: ddMMMyy. Example: 13Jun31");
+                        try
+                        {
+                            Birth = DateTime.ParseExact(value, "ddMMMyy", Preferences.cultureInfo);
+                        }
+                        catch
+                        {
+                            throw new FormatException("Incorrect input date format. Please use: ddMMMyy. Example: 13Jun31");
+                        }
                     }
                     Changed = true;
                 }
@@ -585,6 +607,8 @@ namespace sb_admin_2.Web1.Models
         {
             PassportList = new PassportList();
             PassportList.person = this;
+            Birth = null;
+            _sex = Sex.none;
         }
 
         static public Person CreatePerson()
@@ -622,13 +646,18 @@ namespace sb_admin_2.Web1.Models
                 SecondNameUA = Convert.ToString(tab.Rows[0]["lastNameUA"]);
                 MiddleNameUA = Convert.ToString(tab.Rows[0]["middleNameUA"]);
                 itn = Convert.ToString(tab.Rows[0]["itn"]);
-                Birth = Convert.ToDateTime(tab.Rows[0]["birthDate"]);
+                if (tab.Rows[0]["birthDate"] != DBNull.Value)
+                {
+                    Birth = Convert.ToDateTime(tab.Rows[0]["birthDate"]);
+                }
                 Description = Convert.ToString(tab.Rows[0]["Note"]);
 
-                if (Convert.ToInt32(tab.Rows[0]["gender"]) == 0)
-                    _sex = Sex.male;
-                else
-                    _sex = Sex.female;
+                switch (Convert.ToInt32(tab.Rows[0]["gender"]))
+                {
+                    case 0: _sex = Sex.male; break;
+                    case 1: _sex = Sex.female; break;
+                    default: _sex = Sex.none; break;
+                }
             }
             else if (tab.Rows.Count > 1)
             {
@@ -727,10 +756,12 @@ namespace sb_admin_2.Web1.Models
             else
                 str += "F";
 
-            TimeSpan age = DateTime.Now - Birth;
-            if (age < TimeSpan.FromDays(365.0 * 2.0))
-                str += "I";
-
+            if (Birth.HasValue)
+            {
+                TimeSpan age = DateTime.Now - Birth.Value;
+                if (age < TimeSpan.FromDays(365.0 * 2.0))
+                    str += "I";
+            }
             return str;
         }
     }
