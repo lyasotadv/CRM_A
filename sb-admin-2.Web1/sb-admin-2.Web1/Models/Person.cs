@@ -317,16 +317,19 @@ namespace sb_admin_2.Web1.Models
     {
         public int PersonID { get; set; }
 
-        private enum Sex { male, female };
+        private enum Sex { none, male, female };
 
         private Sex _sex;
 
         private int GenderID()
         {
-            if (_sex == Sex.male)
-                return 0;
-            else
-                return 1;
+            switch (_sex)
+            {
+                case Sex.male: return 0;
+                case Sex.female: return 1;
+                case Sex.none: return 2;
+            }
+            return 2;
         }
 
         private string _FirstName;
@@ -441,10 +444,12 @@ namespace sb_admin_2.Web1.Models
         { 
             get
             {
-                if (_sex == Person.Sex.male)
-                    return "male";
-                else
-                    return "female";
+                switch (_sex)
+                {
+                    case Sex.male: return "male";
+                    case Sex.female: return "female";
+                    default: return "";
+                }
             }
             set
             {
@@ -464,7 +469,7 @@ namespace sb_admin_2.Web1.Models
                             }
                         default:
                             {
-                                throw new ArgumentException("Input gender in incorrect");
+                                throw new ArgumentException("Gender is undefined");
                             }
                     }
                     Changed = true;
@@ -603,6 +608,7 @@ namespace sb_admin_2.Web1.Models
             PassportList = new PassportList();
             PassportList.person = this;
             Birth = null;
+            _sex = Sex.none;
         }
 
         static public Person CreatePerson()
@@ -646,10 +652,12 @@ namespace sb_admin_2.Web1.Models
                 }
                 Description = Convert.ToString(tab.Rows[0]["Note"]);
 
-                if (Convert.ToInt32(tab.Rows[0]["gender"]) == 0)
-                    _sex = Sex.male;
-                else
-                    _sex = Sex.female;
+                switch (Convert.ToInt32(tab.Rows[0]["gender"]))
+                {
+                    case 0: _sex = Sex.male; break;
+                    case 1: _sex = Sex.female; break;
+                    default: _sex = Sex.none; break;
+                }
             }
             else if (tab.Rows.Count > 1)
             {
