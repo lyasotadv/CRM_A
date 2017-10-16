@@ -479,7 +479,7 @@ namespace sb_admin_2.Web1.Models
                     str += SerialNumber + "-";
                     str += CountryOfEmmitation.ISO3 + "-";
                     str += person.BirthStr.ToUpper() + "-";
-                    str += person.AviaStatus() + "-";
+                    str += person.AviaStatusGender() + "-";
                     str += ValidTillStr.ToUpper() + "-";
                     str += PersonSurname.ToUpper() + "-";
                     str += PersonName.ToUpper();
@@ -501,7 +501,7 @@ namespace sb_admin_2.Web1.Models
                     str += SerialNumber + "/";
                     str += CountryOfEmmitation.ISO + "/";
                     str += person.BirthStr.ToUpper() + "/";
-                    str += person.AviaStatus() + "/";
+                    str += person.AviaStatusGender() + "/";
                     str += ValidTillStr.ToUpper() + "/";
                     str += PersonSurname.ToUpper() + "/";
                     str += PersonName.ToUpper();
@@ -523,7 +523,7 @@ namespace sb_admin_2.Web1.Models
                     str += SerialNumber + "/";
                     str += CountryOfEmmitation.ISO3 + "/";
                     str += person.BirthStr.ToUpper() + "/";
-                    str += person.AviaStatus() + "/";
+                    str += person.AviaStatusGender() + "/";
                     str += ValidTillStr.ToUpper() + "/";
                     str += PersonSurname.ToUpper() + "/";
                     str += PersonName.ToUpper();

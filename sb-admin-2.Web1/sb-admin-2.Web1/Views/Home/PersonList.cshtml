@@ -45,25 +45,27 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Type</th>
+                                <th>Short string</th>
                                 <th>Label</th>
-                                <th>Edit</th>
                             </tr>
                         </thead>
                         <tfoot>
                             <tr>
                                 <th>Name</th>
-                                <th>Type</th>
+                                <th>Short string</th>
                                 <th>Label</th>
-                                <th>Edit</th>
                             </tr>
                         </tfoot>
                         <tbody>
                             @foreach (var item in Model.personList)
                             {
                                 <tr>
-                                    <td>@Html.DisplayFor(model => item.FullName)</td>
-                                    <td>@Html.DisplayFor(model => item.PersonTypeStr)</td>
+                                    <td>
+                                        <a class="btn btn-link" href='@Url.Action("Person", "Home", new { id = item.ID})'>
+                                            @Html.DisplayFor(model => item.FullName)
+                                        </a>
+                                    </td>
+                                    <td>@Html.DisplayFor(model => item.FullNameAviaFormat)</td>
                                     <td>
                                         @foreach (var itemLab in item.labelList)
                                         {
@@ -72,7 +74,6 @@
                                             </span>
                                         }
                                     </td>
-                                    <td><a class="btn btn-default" href='@Url.Action("Person", "Home", new { id = item.ID})'><i class="glyphicon glyphicon-pencil"></i></a></td>
                                 </tr>
                             }
                         </tbody>
@@ -81,7 +82,7 @@
                         $(document).ready(function () {
                             $('#tablePerson').DataTable({
                                 initComplete: function () {
-                                    this.api().columns([0,1]).every(function () {
+                                    this.api().columns([]).every(function () {
 
                                         var column = this;
                                         var select = $('<select><option value=""></option></select>')
