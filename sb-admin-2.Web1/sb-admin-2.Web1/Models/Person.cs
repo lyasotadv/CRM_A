@@ -23,6 +23,8 @@ namespace sb_admin_2.Web1.Models
                                         "people.lastName, " +
                                         "people.middleName, " +
                                         "company.officialCompanyName, " +
+                                        "people.birthDate, " +
+                                        "people.gender, " + 
                                         "person.isPeople " +
                                         "from person " +
                                         "left join people " +
@@ -43,6 +45,17 @@ namespace sb_admin_2.Web1.Models
                     person.FirstName = row["firstName"].ToString();
                     person.SecondName = row["lastName"].ToString();
                     person.MiddleName = row["middleName"].ToString();
+                    if (row["birthDate"] != DBNull.Value)
+                    {
+                        person.Birth = Convert.ToDateTime(row["birthDate"]);
+                    }
+
+                    switch (Convert.ToInt32(row["gender"]))
+                    {
+                        case 0: person.Gender = "male"; break;
+                        case 1: person.Gender = "female"; break;
+                    }
+
                     person.labelList.Load();
 
                     this.Add(person);
@@ -311,6 +324,14 @@ namespace sb_admin_2.Web1.Models
             }
             return personGen;
         }
+
+        public virtual string FullNameAviaFormat
+        {
+            get
+            {
+                return string.Empty;
+            }
+        }
     }
 
     public class Person : PersonGeneral
@@ -518,7 +539,15 @@ namespace sb_admin_2.Web1.Models
 
         public override string FullName
         {
-            get { return FirstName + " " + MiddleName + " " + SecondName; }
+            get 
+            { 
+                var str = SecondName + " " + FirstName;
+                if (!string.IsNullOrEmpty(MiddleName))
+                {
+                    str += " " + MiddleName;
+                }
+                return str;
+            }
             set { throw new NotImplementedException("There is no parser of full name for person"); }
         }
 
@@ -748,7 +777,7 @@ namespace sb_admin_2.Web1.Models
             base.Delete();
         }
 
-        public string AviaStatus()
+        public string AviaStatusGender()
         {
             string str = string.Empty;
             if (_sex == Sex.male)
@@ -763,6 +792,67 @@ namespace sb_admin_2.Web1.Models
                     str += "I";
             }
             return str;
+        }
+
+        private string Honorific()
+        {
+            if (Birth.HasValue)
+            {
+                var age  = DateTime.Now - Birth.Value;
+                switch (_sex)
+                {
+                    case Sex.male:
+                        {
+                            return (age < TimeSpan.FromDays(365.0 * 18.0)) ? "mstr" : "mr";
+                        }
+                    case Sex.female:
+                        {
+                            return (age < TimeSpan.FromDays(365.0 * 18.0)) ? "miss" : "mrs";
+                        }
+                }
+            }
+            return "";
+        }
+
+        private string AviaStatusAge()
+        {
+            if (Birth.HasValue)
+            {
+                var age = DateTime.Now - Birth.Value;
+                if (age < TimeSpan.FromDays(365.0 * 2.0))
+                    return "inf";
+                if (age < TimeSpan.FromDays(365.0 * 12.0))
+                    return "chd";
+                if (age < TimeSpan.FromDays(365.0 * 18.0))
+                    return "yth";
+                if (age < TimeSpan.FromDays(365.0 * 60.0))
+                    return "";
+                return "src";
+            }
+            return "";
+        }
+
+        public override string FullNameAviaFormat
+        {
+            get
+            {
+                var str = SecondName.ToLower() + "/" + FirstName.ToLower();
+
+                var hon = Honorific();
+                var stat = AviaStatusAge();
+
+                if (!string.IsNullOrEmpty(hon))
+                {
+                    str += " " + hon;
+                }
+
+                if (!string.IsNullOrEmpty(stat))
+                {
+                    str += " (" + stat + ")";
+                }
+
+                return str;
+            }
         }
     }
 
