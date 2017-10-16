@@ -848,7 +848,7 @@ namespace sb_admin_2.Web1.Models
 
                 if (!string.IsNullOrEmpty(stat))
                 {
-                    str += " (" + stat + ")";
+                    str += " (" + stat +"/" + BirthStr + ")";
                 }
 
                 return str;
